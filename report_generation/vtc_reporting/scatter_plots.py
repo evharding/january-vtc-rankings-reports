@@ -7,7 +7,7 @@ def scatter_age_dist(working_set):
     ax.text(row['Age'] + 0.3, row['Distance'] + 0.3 , row['Name'], fontsize=6 )
   return ax
 
-def everyone_plot(nbcers):
+def everyone_plot(nbcers, filename):
   # Summary scatterplot of everyone vs Charlie. Labels make it a little messy
   plt.figure(figsize=(20, 20))
   working_set = nbcers
@@ -15,7 +15,7 @@ def everyone_plot(nbcers):
   row = working_set.iloc[0]
   ax.text(row['Age'] + 0.3, row['Distance']+ 0.3, row['Name'])
   ax.set_title('Look How Far Ahead Charlie Is')
-  plt.savefig('everyone.png')
+  plt.savefig(filename)
 
 def make_scatter(working_set, title, filename):
   plt.figure(figsize=(20, 20))

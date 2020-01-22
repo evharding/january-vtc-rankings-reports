@@ -1,5 +1,5 @@
 reports
 backups
-vtc-standings
 venv
 *.pyc
+data

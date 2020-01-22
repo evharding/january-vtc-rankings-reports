@@ -1,4 +1,4 @@
-import vtc_reporting.scatter_plots as scatter
+import report_generation.vtc_reporting.scatter_plots as scatter
 import os
 
 def ensure_dir(dirname):
@@ -13,7 +13,37 @@ def convert_meters(dist):
   parsed = int(''.join(dist[:-1].split(',')))
   return parsed
 
-def for_current_set(nbcers, reporting_dir, report_date):
+def make_graphs(nbcers, reporting_dir, report_date):
+  dated_report_dir = f'{reporting_dir}/{report_date}'
+  ensure_dir(dated_report_dir)
+
+  # Make sure the fields we expect to be numbers are numbers
+  nbcers['Distance'] = nbcers['Distance'].apply(convert_meters)
+  nbcers['Age'] = nbcers['Age'].astype('int')
+
+  ladies = nbcers.where(nbcers['Sex'] == 'F' )
+  gents = nbcers[1::].where(nbcers['Sex'] == 'M')
+  under40 = nbcers.where(nbcers['Age'] < 40)
+  middle_age = nbcers.where((nbcers['Age'] >= 40) & (nbcers['Age'] < 65))
+  over65 = nbcers.where(nbcers['Age'] >= 65)
+
+  scatter.everyone_plot(nbcers, f'{dated_report_dir}/everyone.png')
+  scatter.make_scatter(under40.dropna(), 'Under 40 Crowd', f'{dated_report_dir}/youngfolks.png')
+  scatter.make_scatter(middle_age.dropna(), '40 to 65 Crowd', f'{dated_report_dir}/middlefolks.png')
+  scatter.make_scatter(over65.dropna(), 'The 65+ Crowd', f'{dated_report_dir}/oldcrowd.png')
+  scatter.make_scatter(gents.dropna(), 'Just The Boys', f'{dated_report_dir}/just-the-boys.png')
+  scatter.make_scatter(ladies.dropna(), 'Just The Girls', f'{dated_report_dir}/just-the-girls.png')
+
+  return [
+    f'{dated_report_dir}/everyone.png',
+    f'{dated_report_dir}/youngfolks.png',
+    f'{dated_report_dir}/middlefolks.png',
+    f'{dated_report_dir}/oldcrowd.png',
+    f'{dated_report_dir}/just-the-boys.png',
+    f'{dated_report_dir}/just-the-girls.png'
+  ]
+
+def make_stats(nbcers, reporting_dir, report_date):
   # Ensure that we have a directory to save the report
   dated_report_dir = f'{reporting_dir}/{report_date}'
   ensure_dir(dated_report_dir)
@@ -21,8 +51,6 @@ def for_current_set(nbcers, reporting_dir, report_date):
   # Make sure the fields we expect to be numbers are numbers
   nbcers['Distance'] = nbcers['Distance'].apply(convert_meters)
   nbcers['Age'] = nbcers['Age'].astype('int')
-  print(f'\n=================== {report_date} ===================')
-  print(nbcers.head())
 
   ladies = nbcers.where(nbcers['Sex'] == 'F' )
   gents = nbcers[1::].where(nbcers['Sex'] == 'M')
@@ -30,12 +58,6 @@ def for_current_set(nbcers, reporting_dir, report_date):
   under40 = nbcers.where(nbcers['Age'] < 40)
   middle_age = nbcers.where((nbcers['Age'] >= 40) & (nbcers['Age'] < 65))
   over65 = nbcers.where(nbcers['Age'] >= 65)
-
-  scatter.make_scatter(under40.dropna(), 'Under 40 Crowd', f'{dated_report_dir}/youngfolks.png')
-  scatter.make_scatter(middle_age.dropna(), '40 to 65 Crowd', f'{dated_report_dir}/middlefolks.png')
-  scatter.make_scatter(over65.dropna(), 'The 65+ Crowd', f'{dated_report_dir}/oldcrowd.png')
-  scatter.make_scatter(gents.dropna(), 'Just The Boys', f'{dated_report_dir}/just-the-boys.png')
-  scatter.make_scatter(ladies.dropna(), 'Just The Girls', f'{dated_report_dir}/just-the-girls.png')
 
   # get some stats:
   tmean = round(nbcers['Distance'].mean())
@@ -54,8 +76,8 @@ def for_current_set(nbcers, reporting_dir, report_date):
   old_mean = round(over65['Distance'].mean())
   old_total = over65['Distance'].sum()
 
-
-  with open(f'{dated_report_dir}/stats.txt', 'w') as f:
+  filename = f'{dated_report_dir}/stats.txt'
+  with open(filename, 'w') as f:
     f.write(f'{report_date}')
     f.write(f'\n\n{"":<19}{"Mean":>10}{"Total":>16}')
     f.write(f'\n{"All:":<19}{tmean:>10,}m{ttotal:>15,}m')
@@ -66,3 +88,4 @@ def for_current_set(nbcers, reporting_dir, report_date):
     f.write(f'\n{"65+ Crowd:":<19}{old_mean:>10,}m{old_total:>15,}m')
     f.write(f'\n{"-"*46}')
     f.write(f'\n{"(Gents w/Charlie):":<19}{gwc_mean:>10,}m{gwc_total:>15,}m')
+  return filename
