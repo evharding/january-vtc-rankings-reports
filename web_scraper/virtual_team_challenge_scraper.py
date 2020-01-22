@@ -85,14 +85,19 @@ def build_history(data_dirname = default_data_dir):
       rowing_club = record['Team']
       dist = record['Distance']
 
-      rower = get_rower_by_name(session, name)
-      if not rower:
-        print(f'Found a new rower: {name}')
-        add_rower(session, name, rowing_club, age, sex)
+      try:
         rower = get_rower_by_name(session, name)
-      if not check_for_sample(session, date_fetched, rower.id):
-        add_standing_sample(session, date_fetched, dist, ranking, rower.id)
-      session.commit()
+        if not rower:
+          print(f'Found a new rower: {name}')
+          add_rower(session, name, rowing_club, age, sex)
+          rower = get_rower_by_name(session, name)
+        if not check_for_sample(session, date_fetched, rower.id):
+          add_standing_sample(session, date_fetched, dist, ranking, rower.id)
+        session.commit()
+      except:
+        session.rollback()
+      finally:
+        session.close()
 
     print('Loading into db...')
     new_data.apply(add_standing_record, axis=1, args= [date_fetched])
