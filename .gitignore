@@ -3,3 +3,5 @@ backups
 venv
 *.pyc
 data
+*.sqlite
+.vscode
